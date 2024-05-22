@@ -24,7 +24,7 @@ class upload_to_gcp_storage:
     def INPUT_TYPES(s):
         return {
             "required": {
-                #"images": ("IMAGE", ),
+                "images": ("IMAGE", ),
                 "file_name": ("STRING", {"default": 'file', "multiline": False}),
                 "blob_name": ("STRING", {"default": 'blob', "multiline": False}),
                 "bucket_name": ("STRING", {"default": "bucket", "multiline": False}),
@@ -37,7 +37,7 @@ class upload_to_gcp_storage:
     OUTPUT_NODE = True
     CATEGORY = "GCP"
 
-    def upload_to_gcp_storage(self, file_name,blob_name,bucket_name):
+    def upload_to_gcp_storage(self,images,file_name,blob_name,bucket_name):
         subfolder = os.path.dirname(os.path.normpath(file_name))
         full_output_folder = os.path.join(self.output_dir, subfolder)
         full_file_path = os.path.join(full_output_folder, file_name)
