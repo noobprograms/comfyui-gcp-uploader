@@ -1,6 +1,8 @@
 from google.cloud import storage
+import folder_paths
 import json
 import os
+
 
 config_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'config.json')
 
@@ -16,13 +18,15 @@ def get_api_key():
      
 class upload_to_gcp_storage:
     def __init__(self):
-        pass
+        self.output_dir = folder_paths.get_output_directory()
+        
     
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
-                "images": ("IMAGE", ),
+                #"images": ("IMAGE", ),
+                "file_name": ("STRING", {"default": 'file', "multiline": False}),
                 "blob_name": ("STRING", {"default": 'blob', "multiline": False}),
                 "bucket_name": ("STRING", {"default": "bucket", "multiline": False}),
             },
@@ -35,15 +39,18 @@ class upload_to_gcp_storage:
     CATEGORY = "GCP"
 
     @staticmethod
-    def upload_to_gcp_storage(images,blob_name,bucket_name):
-        print(f"Uploading file {images} to {bucket_name} as {blob_name}..")
+    def upload_to_gcp_storage(self, file_name,blob_name,bucket_name):
+        subfolder = os.path.dirname(os.path.normpath(file_name))
+        full_output_folder = os.path.join(self.output_dir, subfolder)
+        full_file_path = os.path.join(full_output_folder, file_name)
+        print(f"Saving file to {full_file_path}..")
 
         get_api_key()
-
+        print(f"Uploading file {file_name} to {bucket_name} as {blob_name}..")
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
         blob = bucket.blob(blob_name)
-        blob.upload_from_filename(images)
+        blob.upload_from_filename(full_file_path)
 
 NODE_CLASS_MAPPINGS = {
     "GCPStorage": upload_to_gcp_storage,
