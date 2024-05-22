@@ -31,7 +31,7 @@ class upload_to_gcp_storage:
     
     RETURN_TYPES = ()
     FUNCTION = "upload_to_gcp_storage"
-    OUTPUT_NODE = False
+    OUTPUT_NODE = True
     CATEGORY = "GCP"
 
     @staticmethod
