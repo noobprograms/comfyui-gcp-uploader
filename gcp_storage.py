@@ -20,7 +20,6 @@ class upload_to_gcp_storage:
     def __init__(self):
         self.output_dir = folder_paths.get_output_directory()
         
-    
     @classmethod
     def INPUT_TYPES(s):
         return {
@@ -38,7 +37,6 @@ class upload_to_gcp_storage:
     OUTPUT_NODE = True
     CATEGORY = "GCP"
 
-    @staticmethod
     def upload_to_gcp_storage(self, file_name,blob_name,bucket_name):
         subfolder = os.path.dirname(os.path.normpath(file_name))
         full_output_folder = os.path.join(self.output_dir, subfolder)
