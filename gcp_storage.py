@@ -35,7 +35,7 @@ class upload_to_gcp_storage:
     CATEGORY = "GCP"
 
     @staticmethod
-    def upload_to_storage(images,blob_name,bucket_name):
+    def upload_to_gcp_storage(images,blob_name,bucket_name):
         print(f"Uploading file {images} to {bucket_name} as {blob_name}..")
 
         get_api_key()
