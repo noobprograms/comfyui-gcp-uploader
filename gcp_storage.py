@@ -1,29 +1,19 @@
 from google.cloud import storage
-import importlib
 import json
 import os
 
-CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),'config.json')
+config_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'config.json')
 
 def get_api_key():
     print(f"Checking for Service account json..")
     try:
-        print(f"Config File Location: {CONFIG_FILE}")
-        with open(CONFIG_FILE, "r") as f:
+        print(f"Config File Location: {config_file_path}")
+        with open(config_file_path, "r") as f:
             config = json.load(f)
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= config["gcp_service_json_path"]
     except:
         print("Error: Service account json not found")
-
-def install_gcp_storage():
-    print(f"Checking for google-cloud-storage installation..")
-    try:
-        importlib.import_module("google-cloud-storage")
-    except ImportError:
-        print("Error: google-cloud-storage not found. Installing..")
-        import pip
-        pip.main(["install", "google-cloud-storage"])
-        
+     
 class GCPStorage:
     def __init__(self):
         pass
@@ -50,7 +40,6 @@ class GCPStorage:
         print(f"Uploading file {image} to {bucket_name} as {blob_name}..")
 
         get_api_key()
-        install_gcp_storage()
 
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
