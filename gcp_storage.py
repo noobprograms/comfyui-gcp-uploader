@@ -14,7 +14,7 @@ def get_api_key():
     except:
         print("Error: Service account json not found")
      
-class GCPStorage:
+class upload_to_gcp_storage:
     def __init__(self):
         pass
     
@@ -22,7 +22,7 @@ class GCPStorage:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "image": ("IMAGE", ),
+                "images": ("IMAGE", ),
                 "blob_name": ("STRING", {"default": 'blob', "multiline": False}),
                 "bucket_name": ("STRING", {"default": "bucket", "multiline": False}),
             },
@@ -30,24 +30,23 @@ class GCPStorage:
         }
     
     RETURN_TYPES = ()
-    FUNCTION = "upload_to_storage"
+    FUNCTION = "upload_to_gcp_storage"
     OUTPUT_NODE = False
     CATEGORY = "GCP"
-    EXECUTE='upload_to_storage'
 
     @staticmethod
-    def upload_to_storage(image,blob_name,bucket_name):
-        print(f"Uploading file {image} to {bucket_name} as {blob_name}..")
+    def upload_to_storage(images,blob_name,bucket_name):
+        print(f"Uploading file {images} to {bucket_name} as {blob_name}..")
 
         get_api_key()
 
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
         blob = bucket.blob(blob_name)
-        blob.upload_from_filename(image)
+        blob.upload_from_filename(images)
 
 NODE_CLASS_MAPPINGS = {
-    "GCPStorage": GCPStorage,
+    "GCPStorage": upload_to_gcp_storage,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
