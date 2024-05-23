@@ -20,6 +20,7 @@ class upload_to_gcp_storage:
                 "images": ("IMAGE", ),
                 "file_name": ("STRING", {"default": 'file', "multiline": False}),
                 "bucket_name": ("STRING", {"default": "bucket", "multiline": False}),
+                "bucket_folder_prefix": ("STRING", {"multiline": False}),
             },
             "optional": {},
         }
@@ -29,7 +30,7 @@ class upload_to_gcp_storage:
     OUTPUT_NODE = True
     CATEGORY = "image"
 
-    def upload_to_gcp_storage(self,images,file_name,bucket_name):
+    def upload_to_gcp_storage(self,images,file_name,bucket_name,bucket_folder_prefix):
         get_api_key()
 
         file = f"{file_name}.png"
@@ -42,8 +43,8 @@ class upload_to_gcp_storage:
 
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(file)
-        print(f"Uploading blob {file_name} to {bucket_name}..")
+        blob = bucket.blob(f"{bucket_folder_prefix}/{file}")
+        print(f"Uploading blob to {bucket_name}/{bucket_folder_prefix}/{file}..")
         blob.upload_from_filename(full_file_path)
 
         return {"ui": {"images": []}}
