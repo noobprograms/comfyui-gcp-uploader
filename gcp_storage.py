@@ -1,7 +1,9 @@
 from google.cloud import storage
 import folder_paths
+from PIL import Image
 import json
 import os
+import numpy as np
 
 
 config_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'config.json')
@@ -15,6 +17,27 @@ def get_api_key():
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= config["gcp_service_json_path"]
     except:
         print("Error: Service account json not found")
+
+def save_images(self, images, filename_prefix="ComfyUI"):
+    filename_prefix += self.prefix_append
+    full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, self.output_dir, images[0].shape[1], images[0].shape[0])
+    results = list()
+    for (image) in enumerate(images):
+        i = 255. * image.cpu().numpy()
+        img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
+        metadata = None
+
+        file = f"{filename}.png"
+        print(f"Saving file to {full_output_folder}/{filename}..")
+        img.save(os.path.join(full_output_folder, file), pnginfo=metadata, compress_level=self.compress_level)
+        results.append({
+            "filename": file,
+            "subfolder": subfolder,
+            "type": self.type
+        })
+        counter += 1
+
+    return { "ui": { "images": results } }
      
 class upload_to_gcp_storage:
     def __init__(self):
@@ -37,12 +60,14 @@ class upload_to_gcp_storage:
     OUTPUT_NODE = True
     CATEGORY = "GCP"
 
+
+
+
     def upload_to_gcp_storage(self,images,file_name,blob_name,bucket_name):
         subfolder = os.path.dirname(os.path.normpath(file_name))
         full_output_folder = os.path.join(self.output_dir, subfolder)
         full_file_path = os.path.join(full_output_folder, file_name)
-        print(f"Saving file to {full_file_path}..")
-
+        save_images(self, images,file_name)
         get_api_key()
         print(f"Uploading file {file_name} to {bucket_name} as {blob_name}..")
         storage_client = storage.Client()
