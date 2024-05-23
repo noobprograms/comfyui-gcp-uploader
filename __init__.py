@@ -23,7 +23,6 @@ if not os.path.isfile(config_file_path):
     with open(config_file_path, "w") as f:
         json.dump(config, f, indent=2)
 
-
 from .gcp_storage import NODE_CLASS_MAPPINGS
 from .gcp_storage import NODE_DISPLAY_NAME_MAPPINGS
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']

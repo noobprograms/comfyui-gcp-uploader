@@ -40,11 +40,8 @@ class upload_to_gcp_storage:
         print(f"Saving file '{file_name}' to {full_file_path}..")
         save_images(self, images,file_name)
 
-        print(f"Creating client..")
         storage_client = storage.Client()
-        print(f"Declaring bucket..")
         bucket = storage_client.bucket(bucket_name)
-        print(f"Creating blob..")
         blob = bucket.blob(file)
         print(f"Uploading blob {file_name} to {bucket_name}..")
         blob.upload_from_filename(full_file_path)
