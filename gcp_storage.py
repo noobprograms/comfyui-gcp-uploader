@@ -19,7 +19,6 @@ def get_api_key():
         print("Error: Service account json not found")
 
 def save_images(self, images, filename_prefix="ComfyUI"):
-    filename_prefix += self.prefix_append
     full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, self.output_dir, images[0].shape[1], images[0].shape[0])
     results = list()
     for (image) in enumerate(images):
@@ -41,6 +40,7 @@ def save_images(self, images, filename_prefix="ComfyUI"):
      
 class upload_to_gcp_storage:
     def __init__(self):
+        self.type = "output"
         self.output_dir = folder_paths.get_output_directory()
         
     @classmethod
@@ -61,8 +61,6 @@ class upload_to_gcp_storage:
     CATEGORY = "GCP"
 
 
-
-
     def upload_to_gcp_storage(self,images,file_name,blob_name,bucket_name):
         subfolder = os.path.dirname(os.path.normpath(file_name))
         full_output_folder = os.path.join(self.output_dir, subfolder)
@@ -72,7 +70,7 @@ class upload_to_gcp_storage:
         print(f"Uploading file {file_name} to {bucket_name} as {blob_name}..")
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(blob_name)
+        blob = bucket.blob(f"{blob_name}.png")
         blob.upload_from_filename(full_file_path)
 
 NODE_CLASS_MAPPINGS = {
