@@ -37,13 +37,16 @@ class upload_to_gcp_storage:
         full_output_folder = os.path.join(self.output_dir, subfolder)
         full_file_path = os.path.join(full_output_folder, file)
 
-        print(f"Saving file {file_name} to {full_file_path}..")
+        print(f"Saving file '{file_name}' to {full_file_path}..")
         save_images(self, images,file_name)
 
-        print(f"Uploading file {file_name} to {bucket_name}..")
+        print(f"Creating client..")
         storage_client = storage.Client()
+        print(f"Declaring bucket..")
         bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(file)
+        print(f"Creating blob..")
+        blob = bucket.blob(full_file_path)
+        print(f"Uploading blob {file_name} to {bucket_name}..")
         blob.upload_from_filename(full_file_path)
 
 def get_api_key():
@@ -52,6 +55,7 @@ def get_api_key():
         print(f"Config File Location: {config_file_path}")
         with open(config_file_path, "r") as f:
             config = json.load(f)
+        print(f"Setting [GOOGLE_APPLICATION_CREDENTIALS] to {config["gcp_service_json_path"]}..")
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= config["gcp_service_json_path"]
     except:
         print("Error: Service account json not found")
