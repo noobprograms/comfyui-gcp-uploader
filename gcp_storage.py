@@ -55,8 +55,9 @@ def get_api_key():
         print(f"Config File Location: {config_file_path}")
         with open(config_file_path, "r") as f:
             config = json.load(f)
-        print(f"Setting [GOOGLE_APPLICATION_CREDENTIALS] to {config["gcp_service_json_path"]}..")
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= config["gcp_service_json_path"]
+        json_path = config["gcp_service_json_path"]
+        print(f"Setting [GOOGLE_APPLICATION_CREDENTIALS] to {json_path}..")
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= json_path
     except:
         print("Error: Service account json not found")
 
