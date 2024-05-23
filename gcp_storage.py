@@ -5,7 +5,7 @@ import json
 import os
 import numpy as np
 
-config_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'config.json')
+config_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),'gcp_config.json')
      
 class upload_to_gcp_storage:
     def __init__(self):

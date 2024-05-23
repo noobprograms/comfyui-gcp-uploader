@@ -2,7 +2,7 @@ import importlib
 import os
 import json
 
-config_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")
+config_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "gcp_config")
 
 def install_gcp_storage():
     print(f"Checking for google-cloud-storage installation..")
