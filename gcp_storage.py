@@ -45,9 +45,11 @@ class upload_to_gcp_storage:
         print(f"Declaring bucket..")
         bucket = storage_client.bucket(bucket_name)
         print(f"Creating blob..")
-        blob = bucket.blob(full_file_path)
+        blob = bucket.blob(file)
         print(f"Uploading blob {file_name} to {bucket_name}..")
         blob.upload_from_filename(full_file_path)
+
+        return {"ui": {"images": []}}
 
 def get_api_key():
     print(f"Checking for Service account json..")
