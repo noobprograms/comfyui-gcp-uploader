@@ -27,7 +27,7 @@ class upload_to_gcp_storage:
     RETURN_TYPES = ()
     FUNCTION = "upload_to_gcp_storage"
     OUTPUT_NODE = True
-    CATEGORY = "GCP"
+    CATEGORY = "image"
 
     def upload_to_gcp_storage(self,images,file_name,bucket_name):
         get_api_key()
@@ -36,6 +36,8 @@ class upload_to_gcp_storage:
         subfolder = os.path.dirname(os.path.normpath(file))
         full_output_folder = os.path.join(self.output_dir, subfolder)
         full_file_path = os.path.join(full_output_folder, file)
+
+        print(f"Saving file {file_name} to {full_file_path}..")
         save_images(self, images,file_name)
 
         print(f"Uploading file {file_name} to {bucket_name}..")
@@ -56,28 +58,17 @@ def get_api_key():
 
 def save_images(self, images, filename_prefix="ComfyUI"):
     full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, self.output_dir, images[0].shape[1], images[0].shape[0])
-    results = list()
     for (batch_number, image) in enumerate(images):
         i = 255. * image.cpu().numpy()
         img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
         metadata = None
-
-        filename_with_batch_num = filename.replace("%batch_num%", str(batch_number))
-        file = f"{filename_with_batch_num}.png"
+        file = f"{filename}.png"
         img.save(os.path.join(full_output_folder, file), pnginfo=metadata, compress_level=self.compress_level)
-        results.append({
-            "filename": file,
-            "subfolder": subfolder,
-            "type": self.type
-        })
-        counter += 1
-
-    return { "ui": { "images": results } }
 
 NODE_CLASS_MAPPINGS = {
-    "GCPStorageUpload": upload_to_gcp_storage,
+    "GCPStorageNode": upload_to_gcp_storage,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "GCPStorageUpload": "GCP Storage Node",
+    "GCPStorageNode": "GCP Storage Upload",
 }
