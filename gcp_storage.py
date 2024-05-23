@@ -21,13 +21,13 @@ def get_api_key():
 def save_images(self, images, filename_prefix="ComfyUI"):
     full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, self.output_dir, images[0].shape[1], images[0].shape[0])
     results = list()
-    for (image) in enumerate(images):
+    for (batch_number, image) in enumerate(images):
         i = 255. * image.cpu().numpy()
         img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
         metadata = None
 
-        file = f"{filename}.png"
-        print(f"Saving file to {full_output_folder}/{filename}..")
+        filename_with_batch_num = filename.replace("%batch_num%", str(batch_number))
+        file = f"{filename_with_batch_num}.png"
         img.save(os.path.join(full_output_folder, file), pnginfo=metadata, compress_level=self.compress_level)
         results.append({
             "filename": file,
@@ -49,7 +49,6 @@ class upload_to_gcp_storage:
             "required": {
                 "images": ("IMAGE", ),
                 "file_name": ("STRING", {"default": 'file', "multiline": False}),
-                "blob_name": ("STRING", {"default": 'blob', "multiline": False}),
                 "bucket_name": ("STRING", {"default": "bucket", "multiline": False}),
             },
             "optional": {},
@@ -60,17 +59,19 @@ class upload_to_gcp_storage:
     OUTPUT_NODE = True
     CATEGORY = "GCP"
 
-
-    def upload_to_gcp_storage(self,images,file_name,blob_name,bucket_name):
-        subfolder = os.path.dirname(os.path.normpath(file_name))
-        full_output_folder = os.path.join(self.output_dir, subfolder)
-        full_file_path = os.path.join(full_output_folder, file_name)
-        save_images(self, images,file_name)
+    def upload_to_gcp_storage(self,images,file_name,bucket_name):
         get_api_key()
-        print(f"Uploading file {file_name} to {bucket_name} as {blob_name}..")
+
+        file = f"{file_name}.png"
+        subfolder = os.path.dirname(os.path.normpath(file))
+        full_output_folder = os.path.join(self.output_dir, subfolder)
+        full_file_path = os.path.join(full_output_folder, file)
+        save_images(self, images,file_name)
+
+        print(f"Uploading file {file_name} to {bucket_name}..")
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(f"{blob_name}.png")
+        blob = bucket.blob(file)
         blob.upload_from_filename(full_file_path)
 
 NODE_CLASS_MAPPINGS = {
