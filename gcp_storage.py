@@ -41,7 +41,7 @@ class upload_to_gcp_storage:
         full_file_path = os.path.join(full_output_folder, file)
 
         print(f"Saving file '{file_name}' to {full_file_path}..")
-        save_images(self, images,file_name)
+        results = save_images(self, images,file_name)
 
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
@@ -49,16 +49,24 @@ class upload_to_gcp_storage:
         print(f"Uploading blob to {bucket_name}/{bucket_folder_prefix}/{file}..")
         blob.upload_from_filename(full_file_path)
 
-        return {"ui": {"images": []}}
+        return {"ui": {"images": results}}
 
 def save_images(self, images, filename_prefix="ComfyUI"):
     full_output_folder, filename, counter, subfolder, filename_prefix = folder_paths.get_save_image_path(filename_prefix, self.output_dir, images[0].shape[1], images[0].shape[0])
+    results = list()
     for (batch_number, image) in enumerate(images):
         i = 255. * image.cpu().numpy()
         img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
         metadata = None
         file = f"{filename}.png"
         img.save(os.path.join(full_output_folder, file), pnginfo=metadata, compress_level=self.compress_level)
+        results.append({
+            "filename": file,
+            "subfolder": subfolder,
+            "type": self.type
+        })
+
+    return results
 
 NODE_CLASS_MAPPINGS = {
     "GCPStorageNode": upload_to_gcp_storage,
