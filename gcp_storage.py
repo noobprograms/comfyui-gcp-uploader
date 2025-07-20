@@ -39,16 +39,22 @@ class GCPImageUploader:
         storage_client = storage.Client()
         bucket = storage_client.bucket(bucket_name)
         uploaded_urls = []
-
         for image_meta in results:
             local_path = os.path.join(self.output_dir, image_meta["subfolder"], image_meta["filename"])
             remote_path = f"{bucket_folder_prefix}/{image_meta['filename']}"
             print(f"[GCPImageUploader] Uploading {local_path} → gs://{bucket_name}/{remote_path}")
             blob = bucket.blob(remote_path)
             blob.upload_from_filename(local_path)
-
+            file_size_bytes = os.path.getsize(local_path)
+            size_kb = round(file_size_bytes / 1024, 2)
             public_url = f"https://storage.googleapis.com/{bucket_name}/{remote_path}"
-            uploaded_urls.append(public_url)
+            uploaded_urls.append({
+            "url": public_url,
+            "filename": image_meta["filename"],
+            "width": image_meta["width"],
+            "height": image_meta["height"],
+            "size_kb": size_kb
+        })
 
         return {
             "ui": {"images": results, "uploaded_urls": uploaded_urls}
@@ -84,7 +90,9 @@ class GCPImageUploader:
             results.append({
                 "filename": image_filename,
                 "subfolder": subfolder,
-                "type": self.type
+                "type": self.type,
+                "width": img.width,
+                "height": img.height,
             })
 
         return results
