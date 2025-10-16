@@ -198,9 +198,13 @@ class GCPVideoUploader:
 
                 # Save the video file
                 # Check for ComfyUI VideoFromComponents or similar video objects
-                if hasattr(video_data, '__dict__'):
-                    print(f"[GCPVideoUploader] DEBUG - video_data attributes: {dir(video_data)}")
-                    print(f"[GCPVideoUploader] DEBUG - video_data dict: {vars(video_data)}")
+                print(f"[GCPVideoUploader] DEBUG - Processing video_data")
+                print(f"[GCPVideoUploader] DEBUG - Type: {type(video_data)}")
+                print(f"[GCPVideoUploader] DEBUG - Dir: {dir(video_data)}")
+                try:
+                    print(f"[GCPVideoUploader] DEBUG - Vars: {vars(video_data)}")
+                except:
+                    print(f"[GCPVideoUploader] DEBUG - No vars available")
                 
                 if hasattr(video_data, 'path'):
                     # VideoFromComponents or similar object with path attribute
