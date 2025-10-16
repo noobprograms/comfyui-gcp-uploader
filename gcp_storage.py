@@ -122,6 +122,9 @@ class GCPVideoUploader:
 
     def upload_to_gcp(self, videos, file_name, bucket_name, bucket_folder_prefix, gcp_service_json):
         print(f"[GCPVideoUploader] Using credentials from: {gcp_service_json}")
+        print(f"[GCPVideoUploader] DEBUG - videos type: {type(videos)}")
+        print(f"[GCPVideoUploader] DEBUG - videos content: {videos}")
+        
         os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = gcp_service_json
 
         timestamp = int(time.time())
@@ -129,48 +132,98 @@ class GCPVideoUploader:
         bucket = storage_client.bucket(bucket_name)
         uploaded_urls = []
 
-        # Ensure videos are iterable (can be multiple)
-        if not isinstance(videos, list):
-            videos = [videos]
+        # ComfyUI VIDEO type is typically a tuple: (frames_tensor, fps, etc) or dict with 'filenames'
+        # First, check if videos is a dictionary with 'filenames' key (common format)
+        if isinstance(videos, dict) and 'filenames' in videos:
+            # Extract filenames from the video dictionary
+            video_files = videos['filenames']
+            if not isinstance(video_files, list):
+                video_files = [video_files]
+            
+            for i, video_file_info in enumerate(video_files):
+                # video_file_info might be a dict or a path string
+                if isinstance(video_file_info, dict):
+                    video_path = video_file_info.get('filename') or video_file_info.get('path')
+                    subfolder = video_file_info.get('subfolder', '')
+                    video_type = video_file_info.get('type', 'output')
+                else:
+                    video_path = str(video_file_info)
+                    subfolder = ''
+                    video_type = 'output'
+                
+                # Construct full local path
+                if subfolder:
+                    local_path = os.path.join(self.output_dir, subfolder, video_path)
+                else:
+                    local_path = os.path.join(self.output_dir, video_path)
+                
+                if not os.path.exists(local_path):
+                    raise FileNotFoundError(f"[GCPVideoUploader] Video file not found: {local_path}")
+                
+                # Create new filename with timestamp
+                ext = os.path.splitext(video_path)[1] or ".mp4"
+                filename = f"{file_name}_{timestamp}_{i}{ext}"
+                
+                remote_path = f"{bucket_folder_prefix}/{filename}".lstrip("/")
 
-        for i, video_data in enumerate(videos):
-            # Determine save path
-            ext = ".mp4"  # Default extension
-            filename = f"{file_name}_{timestamp}_{i}{ext}"
+                print(f"[GCPVideoUploader] Uploading {local_path} → gs://{bucket_name}/{remote_path}")
+                blob = bucket.blob(remote_path)
+                blob.upload_from_filename(local_path)
 
-            full_output_folder, _, _, subfolder, _ = folder_paths.get_save_image_path(
-                file_name, self.output_dir, 0, 0
-            )
-            local_path = os.path.join(full_output_folder, filename)
+                file_size_bytes = os.path.getsize(local_path)
+                size_mb = round(file_size_bytes / (1024 * 1024), 2)
+                public_url = f"https://storage.googleapis.com/{bucket_name}/{remote_path}"
 
-            # Save the video file (ComfyUI passes bytes-like or np array depending on node)
-            if hasattr(video_data, "save"):
-                video_data.save(local_path)
-            elif isinstance(video_data, (bytes, bytearray)):
-                with open(local_path, "wb") as f:
-                    f.write(video_data)
-            elif isinstance(video_data, str) and os.path.exists(video_data):
-                shutil.copy(video_data, local_path)
-            else:
-                raise ValueError("[GCPVideoUploader] Unsupported video input format.")
+                uploaded_urls.append({
+                    "url": public_url,
+                    "filename": filename,
+                    "size_mb": size_mb,
+                    "subfolder": subfolder,
+                    "type": self.type,
+                })
+        else:
+            # Fallback: try to handle as list or single item
+            if not isinstance(videos, list):
+                videos = [videos]
 
-            remote_path = f"{bucket_folder_prefix}/{filename}".lstrip("/")
+            for i, video_data in enumerate(videos):
+                # Determine save path
+                ext = ".mp4"  # Default extension
+                filename = f"{file_name}_{timestamp}_{i}{ext}"
 
-            print(f"[GCPVideoUploader] Uploading {local_path} → gs://{bucket_name}/{remote_path}")
-            blob = bucket.blob(remote_path)
-            blob.upload_from_filename(local_path)
+                full_output_folder, _, _, subfolder, _ = folder_paths.get_save_image_path(
+                    file_name, self.output_dir, 0, 0
+                )
+                local_path = os.path.join(full_output_folder, filename)
 
-            file_size_bytes = os.path.getsize(local_path)
-            size_mb = round(file_size_bytes / (1024 * 1024), 2)
-            public_url = f"https://storage.googleapis.com/{bucket_name}/{remote_path}"
+                # Save the video file
+                if hasattr(video_data, "save"):
+                    video_data.save(local_path)
+                elif isinstance(video_data, (bytes, bytearray)):
+                    with open(local_path, "wb") as f:
+                        f.write(video_data)
+                elif isinstance(video_data, str) and os.path.exists(video_data):
+                    shutil.copy(video_data, local_path)
+                else:
+                    raise ValueError(f"[GCPVideoUploader] Unsupported video input format. Type: {type(video_data)}, Value: {video_data}")
 
-            uploaded_urls.append({
-                "url": public_url,
-                "filename": filename,
-                "size_mb": size_mb,
-                "subfolder": subfolder,
-                "type": self.type,
-            })
+                remote_path = f"{bucket_folder_prefix}/{filename}".lstrip("/")
+
+                print(f"[GCPVideoUploader] Uploading {local_path} → gs://{bucket_name}/{remote_path}")
+                blob = bucket.blob(remote_path)
+                blob.upload_from_filename(local_path)
+
+                file_size_bytes = os.path.getsize(local_path)
+                size_mb = round(file_size_bytes / (1024 * 1024), 2)
+                public_url = f"https://storage.googleapis.com/{bucket_name}/{remote_path}"
+
+                uploaded_urls.append({
+                    "url": public_url,
+                    "filename": filename,
+                    "size_mb": size_mb,
+                    "subfolder": subfolder,
+                    "type": self.type,
+                })
 
         print(f"[GCPVideoUploader] Uploaded {len(uploaded_urls)} video(s) successfully.")
         return {
