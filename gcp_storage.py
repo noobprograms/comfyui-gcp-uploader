@@ -256,5 +256,5 @@ NODE_CLASS_MAPPINGS = {
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "GCPImageUploader": "🪣 Upload to GCP Bucket",
-    "GCPVideoUploader": "Upload Video to GCP Bucket",
+    "GCPVideoUploader": "🪣 Upload Video to GCP Bucket",
 }
