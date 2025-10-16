@@ -197,7 +197,26 @@ class GCPVideoUploader:
                 local_path = os.path.join(full_output_folder, filename)
 
                 # Save the video file
-                if hasattr(video_data, "save"):
+                # Check for ComfyUI VideoFromComponents or similar video objects
+                if hasattr(video_data, '__dict__'):
+                    print(f"[GCPVideoUploader] DEBUG - video_data attributes: {dir(video_data)}")
+                    print(f"[GCPVideoUploader] DEBUG - video_data dict: {vars(video_data)}")
+                
+                if hasattr(video_data, 'path'):
+                    # VideoFromComponents or similar object with path attribute
+                    source_path = video_data.path
+                    if os.path.exists(source_path):
+                        shutil.copy(source_path, local_path)
+                    else:
+                        raise FileNotFoundError(f"[GCPVideoUploader] Video path not found: {source_path}")
+                elif hasattr(video_data, 'filename'):
+                    # Object with filename attribute
+                    source_path = video_data.filename
+                    if os.path.exists(source_path):
+                        shutil.copy(source_path, local_path)
+                    else:
+                        raise FileNotFoundError(f"[GCPVideoUploader] Video file not found: {source_path}")
+                elif hasattr(video_data, "save"):
                     video_data.save(local_path)
                 elif isinstance(video_data, (bytes, bytearray)):
                     with open(local_path, "wb") as f:
